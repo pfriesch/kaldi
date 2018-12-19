@@ -2,21 +2,87 @@
 # Copyright (c) 2018, Johns Hopkins University (Yenda Trmal <jtrmal@gmail.com>)
 # License: Apache 2.0
 
-data=./data/
+data=data_kws
 data_url=http://download.tensorflow.org/data
 dataset_name=speech_commands_v0.02
+
+workdir=`pwd`
 
 . ./cmd.sh
 . ./path.sh
 
-stage=0
+stage=0 #TODO
 . utils/parse_options.sh
+
+
+feats_nj=10
+train_nj=30
+decode_nj=5
 
 set -euo pipefail
 
 mkdir -p $data
 
+echo ============================================================================
+echo "                      Data Download & Preparation                         "
+echo ============================================================================
+
 local/download_and_untar.sh $data $data_url $dataset_name
+local/make_text.py $data/$dataset_name $data
+
+
+echo ============================================================================
+echo "         MFCC Feature Extration & CMVN for Training and Test set          "
+echo ============================================================================
+
+cd $workdir
+# Now make MFCC features.
+mfccdir=mfcc_kws
+if [ ! -d $mfccdir ]; then
+
+    for x in train dev test; do
+      steps/make_mfcc.sh --cmd "$train_cmd" --nj $feats_nj $data/$x exp/make_mfcc/$x $mfccdir
+      steps/compute_cmvn_stats.sh $data/$x exp/make_mfcc/$x $mfccdir
+    done
+else
+echo "MFCCs already extracted. Skipping.."
+
+fi
+
+echo ============================================================================
+echo "         MLLR Feature Extration & CMVN for Training and Test set          "
+echo ============================================================================
+
+librispeech_dir=../../librispeech/s5/
+
+for split_name in test dev train ; do
+
+steps/align_fmllr.sh --nj 5 --cmd "$train_cmd" \
+                   $data/$split_name $librispeech_dir/data/lang $librispeech_dir/exp/tri5b exp/align_fmllr_$split_name
+
+
+steps/compute_cmvn_stats.sh  $data/$split_name exp/make_mfcc/$split_name $mfccdir
+done
+
+#chunk=train
+##chunk=dev_clean # Uncomment to process dev
+##chunk=test_clean # Uncomment to process test
+#gmmdir=../../librispeech/s5/exp/tri4b
+#
+#dir=fmllr/$chunk
+#steps/nnet/make_fmllr_feats.sh --nj 10 --cmd "$train_cmd" \
+#    --transform-dir $gmmdir/decode_tgsmall_$chunk \
+#        $dir $data/$chunk $gmmdir $dir/log $dir/$data || exit 1
+#
+#compute-cmvn-stats --spk2utt=ark:$data/$chunk/spk2utt scp:fmllr/$chunk/feats.scp ark:$dir/$data/cmvn_speaker.ark
+
+
+
+
+
+
+
+
 
 #
 ## Begin configuration section.
