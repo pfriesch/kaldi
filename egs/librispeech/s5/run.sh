@@ -4,13 +4,13 @@
 # Set this to somewhere where you want to put your data, or where
 # someone else has already put it.  You'll want to change this
 # if you're not on the CLSP grid.
-data=/export/a15/vpanayotov/data
+data=/mnt/data/datasets/
 
 # base url for downloads.
 data_url=www.openslr.org/resources/12
 lm_url=www.openslr.org/resources/11
 mfccdir=mfcc
-stage=1
+stage=19
 
 . ./cmd.sh
 . ./path.sh
@@ -31,7 +31,9 @@ if [ $stage -le 1 ]; then
 
   # download the LM resources
   local/download_lm.sh $lm_url data/local/lm
+  echo "stage 1 done" >> progress.txt
 fi
+
 
 if [ $stage -le 2 ]; then
   # format the data as Kaldi data directories
@@ -39,7 +41,9 @@ if [ $stage -le 2 ]; then
     # use underscore-separated names in data directories.
     local/data_prep.sh $data/LibriSpeech/$part data/$(echo $part | sed s/-/_/g)
   done
+  echo "stage 2 done" >> progress.txt
 fi
+
 
 ## Optional text corpus normalization and LM training
 ## These scripts are here primarily as a documentation of the process that has been
@@ -65,7 +69,9 @@ if [ $stage -le 3 ]; then
    "<UNK>" data/local/lang_tmp_nosp data/lang_nosp
 
   local/format_lms.sh --src-dir data/lang_nosp data/local/lm
+  echo "stage 3 done" >> progress.txt
 fi
+
 
 if [ $stage -le 4 ]; then
   # Create ConstArpaLm format language model for full 3-gram and 4-gram LMs
@@ -73,7 +79,9 @@ if [ $stage -le 4 ]; then
     data/lang_nosp data/lang_nosp_test_tglarge
   utils/build_const_arpa_lm.sh data/local/lm/lm_fglarge.arpa.gz \
     data/lang_nosp data/lang_nosp_test_fglarge
+    echo "stage 4 done" >> progress.txt
 fi
+
 
 if [ $stage -le 5 ]; then
   # spread the mfccs over various machines, as this data-set is quite large.
@@ -82,7 +90,9 @@ if [ $stage -le 5 ]; then
     utils/create_split_dir.pl /export/b{02,11,12,13}/$USER/kaldi-data/egs/librispeech/s5/$mfcc/storage \
      $mfccdir/storage
   fi
+  echo "stage 5 done" >> progress.txt
 fi
+
 
 
 if [ $stage -le 6 ]; then
@@ -90,7 +100,9 @@ if [ $stage -le 6 ]; then
     steps/make_mfcc.sh --cmd "$train_cmd" --nj 40 data/$part exp/make_mfcc/$part $mfccdir
     steps/compute_cmvn_stats.sh data/$part exp/make_mfcc/$part $mfccdir
   done
+  echo "stage 6 done" >> progress.txt
 fi
+
 
 if [ $stage -le 7 ]; then
   # Make some small data subsets for early system-build stages.  Note, there are 29k
@@ -101,7 +113,9 @@ if [ $stage -le 7 ]; then
   utils/subset_data_dir.sh --shortest data/train_clean_100 2000 data/train_2kshort
   utils/subset_data_dir.sh data/train_clean_100 5000 data/train_5k
   utils/subset_data_dir.sh data/train_clean_100 10000 data/train_10k
+  echo "stage 7 done" >> progress.txt
 fi
+
 
 if [ $stage -le 8 ]; then
   # train a monophone system
@@ -117,7 +131,9 @@ if [ $stage -le 8 ]; then
                       data/$test exp/mono/decode_nosp_tgsmall_$test
     done
   )&
+  echo "stage 8 done" >> progress.txt
 fi
+
 
 if [ $stage -le 9 ]; then
   steps/align_si.sh --boost-silence 1.25 --nj 10 --cmd "$train_cmd" \
@@ -141,7 +157,9 @@ if [ $stage -le 9 ]; then
         data/$test exp/tri1/decode_nosp_{tgsmall,tglarge}_$test
     done
   )&
+  echo "stage 9 done" >> progress.txt
 fi
+
 
 if [ $stage -le 10 ]; then
   steps/align_si.sh --nj 10 --cmd "$train_cmd" \
@@ -167,7 +185,9 @@ if [ $stage -le 10 ]; then
         data/$test exp/tri2b/decode_nosp_{tgsmall,tglarge}_$test
     done
   )&
+  echo "stage 10 done" >> progress.txt
 fi
+
 
 if [ $stage -le 11 ]; then
   # Align a 10k utts subset using the tri2b model
@@ -193,7 +213,9 @@ if [ $stage -le 11 ]; then
         data/$test exp/tri3b/decode_nosp_{tgsmall,tglarge}_$test
     done
   )&
+  echo "stage 11 done" >> progress.txt
 fi
+
 
 if [ $stage -le 12 ]; then
   # align the entire train_clean_100 subset using the tri3b model
@@ -224,7 +246,9 @@ if [ $stage -le 12 ]; then
         data/$test exp/tri4b/decode_nosp_{tgsmall,fglarge}_$test
     done
   )&
+  echo "stage 12 done" >> progress.txt
 fi
+
 
 if [ $stage -le 13 ]; then
   # Now we compute the pronunciation and silence probabilities from training data,
@@ -263,7 +287,9 @@ if [ $stage -le 13 ]; then
         data/$test exp/tri4b/decode_{tgsmall,fglarge}_$test
     done
   )&
+  echo "stage 13 done" >> progress.txt
 fi
+
 
 if [ $stage -le 14 ] && false; then
   # This stage is for nnet2 training on 100 hours; we're commenting it out
@@ -274,7 +300,9 @@ if [ $stage -le 14 ] && false; then
 
   # This nnet2 training script is deprecated.
   local/nnet2/run_5a_clean_100.sh
+  echo "stage 14 done" >> progress.txt
 fi
+
 
 if [ $stage -le 15 ]; then
   local/download_and_untar.sh $data $data_url train-clean-360
@@ -290,7 +318,9 @@ if [ $stage -le 15 ]; then
   # ... and then combine the two sets into a 460 hour one
   utils/combine_data.sh \
     data/train_clean_460 data/train_clean_100 data/train_clean_360
+  echo "stage 15 done" >> progress.txt
 fi
+
 
 if [ $stage -le 16 ]; then
   # align the new, combined set, using the tri4b model
@@ -319,7 +349,9 @@ if [ $stage -le 16 ]; then
         data/$test exp/tri5b/decode_{tgsmall,fglarge}_$test
     done
   )&
+  echo "stage 16 done" >> progress.txt
 fi
+
 
 
 # The following command trains an nnet3 model on the 460 hour setup.  This
@@ -342,7 +374,9 @@ if [ $stage -le 17 ]; then
   # combine all the data
   utils/combine_data.sh \
     data/train_960 data/train_clean_460 data/train_other_500
+  echo "stage 17 done" >> progress.txt
 fi
+
 
 if [ $stage -le 18 ]; then
   steps/align_fmllr.sh --nj 40 --cmd "$train_cmd" \
@@ -370,14 +404,18 @@ if [ $stage -le 18 ]; then
         data/$test exp/tri6b/decode_{tgsmall,fglarge}_$test
     done
   )&
+  echo "stage 18 done" >> progress.txt
 fi
+
 
 
 if [ $stage -le 19 ]; then
   # this does some data-cleaning. The cleaned data should be useful when we add
   # the neural net and chain systems.  (although actually it was pretty clean already.)
   local/run_cleanup_segmentation.sh
+  echo "stage 19 done" >> progress.txt
 fi
+
 
 # steps/cleanup/debug_lexicon.sh --remove-stress true  --nj 200 --cmd "$train_cmd" data/train_clean_100 \
 #    data/lang exp/tri6b data/local/dict/lexicon.txt exp/debug_lexicon_100h
@@ -388,6 +426,9 @@ fi
 #     --rnnlm-ver "faster-rnnlm" \
 #     --rnnlm-options "-hidden 150 -direct 1000 -direct-order 5" \
 #     --rnnlm-tag "h150-me5-1000" $data data/local/lm
+#
+# echo "stage run_rnnlm h150-me5-1000 done" >> progress.txt
+
 
 # #Perform rescoring of tri6b be means of faster-rnnlm using Noise contrastive estimation
 # #Note, that could be extremely slow without CUDA
@@ -398,12 +439,13 @@ fi
 #     --rnnlm-ver "faster-rnnlm" \
 #     --rnnlm-options "-hidden 150 -direct 400 -direct-order 3 --nce 20" \
 #     --rnnlm-tag "h150-me3-400-nce20" $data data/local/lm
+# echo "stage run_rnnlm h150-me3-400-nce20" >> progress.txt
 
 
-if [ $stage -le 20 ]; then
-  # train and test nnet3 tdnn models on the entire data with data-cleaning.
-  local/chain/run_tdnn.sh # set "--stage 11" if you have already run local/nnet3/run_tdnn.sh
-fi
+#if [ $stage -le 20 ]; then
+#  # train and test nnet3 tdnn models on the entire data with data-cleaning.
+#  local/chain/run_tdnn.sh # set "--stage 11" if you have already run local/nnet3/run_tdnn.sh
+#fi
 
 # The nnet3 TDNN recipe:
 # local/nnet3/run_tdnn.sh # set "--stage 11" if you have already run local/chain/run_tdnn.sh
@@ -424,3 +466,6 @@ fi
 
 # Wait for decodings in the background
 wait
+
+echo "ALL DONE!!" >> progress.txt
+
