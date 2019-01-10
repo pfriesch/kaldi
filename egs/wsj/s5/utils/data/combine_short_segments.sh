@@ -126,6 +126,7 @@ if [ -f $srcdir/utt2uniq ]; then
   # (in general, we take the lowest string in lexicographical order).
 
   cat $dir/uniq_sets | LC_ALL=C python -c '
+from __future__ import print_function
 import sys;
 from collections import defaultdict
 uniq2orig_uniq = dict()
@@ -149,7 +150,7 @@ while changed:
                  changed = True
 
 for uniq in sorted(uniq2orig_uniq.keys()):
-    print uniq, uniq2orig_uniq[uniq]
+    print(uniq, uniq2orig_uniq[uniq])
 ' > $dir/uniq_to_orig_uniq
   rm $dir/uniq_sets
 

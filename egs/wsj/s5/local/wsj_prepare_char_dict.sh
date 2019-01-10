@@ -16,14 +16,16 @@ cat $phone_dir/lexicon1_raw_nosil.txt | \
        > $phone_dir/lexicon2_raw_nosil.txt || exit 1;
 
 
-cat $phone_dir/lexicon2_raw_nosil.txt | python -c 'import sys
+cat $phone_dir/lexicon2_raw_nosil.txt | python -c '
+from __future__ import print_function
+import sys
 for l in sys.stdin:
   w = l.strip().split(" ")[0]
   r = w
   for c in w:
     if c not in "!~@#$%^&*()+=/\",;:?_{}-":
       r += " " + c
-  print r
+  print(r)
 ' > $dir/lexicon2_raw_nosil.txt || exit 1;
 
 (echo SIL; echo SPN; echo NSN) > $dir/silence_phones.txt

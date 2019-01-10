@@ -180,6 +180,7 @@ if [ $sub_speaker_frames -gt 0 ]; then
       exit 0;
     fi
     cat $data/spk2utt | python -c "
+from __future__ import print_function
 import sys
 utt_counts = {}
 trash = list(map(lambda x: utt_counts.update({x.split()[0]:float(x.split()[1])}), open('$dir/utt_counts').readlines()))
@@ -212,7 +213,7 @@ for line_index in range(len(lines)):
     if ((current_count >= $sub_speaker_frames) and ((total_counts[spk] - covered_count) >= $sub_speaker_frames)) or (utt == parts[-1]):
       spk_partial = '{0}-{1:06x}'.format(spk, numeric_id)
       numeric_id += 1
-      print ('{0} {1}'.format(spk_partial, ' '.join(current_utts)))
+      print('{0} {1}'.format(spk_partial, ' '.join(current_utts)))
       current_utts = []
       current_count = 0
 "> $dir/spk2utt || exit 1;
