@@ -9,7 +9,7 @@ lm_url=www.openslr.org/resources/11
 . ./cmd.sh
 . ./path.sh
 
-stage=0
+stage=9
 . utils/parse_options.sh
 
 set -euo pipefail
@@ -22,6 +22,8 @@ done
 
 if [ $stage -le 0 ]; then
   local/download_lm.sh $lm_url $data data/local/lm
+
+  touch stage0
 fi
 
 if [ $stage -le 1 ]; then
@@ -41,6 +43,9 @@ if [ $stage -le 1 ]; then
   # Create ConstArpaLm format language model for full 3-gram and 4-gram LMs
   utils/build_const_arpa_lm.sh data/local/lm/lm_tglarge.arpa.gz \
     data/lang_nosp data/lang_nosp_test_tglarge
+
+  touch stage1
+
 fi
 
 if [ $stage -le 2 ]; then
@@ -60,6 +65,9 @@ if [ $stage -le 2 ]; then
   # Get the shortest 500 utterances first because those are more likely
   # to have accurate alignments.
   utils/subset_data_dir.sh --shortest data/train_clean_5 500 data/train_500short
+
+  touch stage2
+
 fi
 
 # train a monophone system
@@ -79,6 +87,9 @@ if [ $stage -le 3 ]; then
 
   steps/align_si.sh --boost-silence 1.25 --nj 5 --cmd "$train_cmd" \
     data/train_clean_5 data/lang_nosp exp/mono exp/mono_ali_train_clean_5
+
+  touch stage3
+
 fi
 
 # train a first delta + delta-delta triphone system on all utterances
@@ -103,6 +114,9 @@ if [ $stage -le 4 ]; then
 
   steps/align_si.sh --nj 5 --cmd "$train_cmd" \
     data/train_clean_5 data/lang_nosp exp/tri1 exp/tri1_ali_train_clean_5
+
+  touch stage4
+
 fi
 
 # train an LDA+MLLT system.
@@ -129,6 +143,10 @@ if [ $stage -le 5 ]; then
   # Align utts using the tri2b model
   steps/align_si.sh  --nj 5 --cmd "$train_cmd" --use-graphs true \
     data/train_clean_5 data/lang_nosp exp/tri2b exp/tri2b_ali_train_clean_5
+
+
+  touch stage5
+
 fi
 
 # Train tri3b, which is LDA+MLLT+SAT
@@ -151,6 +169,9 @@ if [ $stage -le 6 ]; then
         data/$test exp/tri3b/decode_nosp_{tgsmall,tglarge}_$test
     done
   )&
+
+  touch stage6
+
 fi
 
 # Now we compute the pronunciation and silence probabilities from training data,
@@ -173,6 +194,9 @@ if [ $stage -le 7 ]; then
 
   steps/align_fmllr.sh --nj 5 --cmd "$train_cmd" \
     data/train_clean_5 data/lang exp/tri3b exp/tri3b_ali_train_clean_5
+
+  touch stage7
+
 fi
 
 
@@ -192,12 +216,20 @@ if [ $stage -le 8 ]; then
       --cmd "$decode_cmd" data/lang_test_{tgsmall,tglarge} \
       data/$test exp/tri3b/decode_{tgsmall,tglarge}_$test
   done
+
+  touch stage8
+
 fi
 
 # Train a chain model
 if [ $stage -le 9 ]; then
   local/chain/run_tdnn.sh --stage 0
+
+  touch stage9
+
 fi
+
+touch done
 
 # local/grammar/simple_demo.sh
 

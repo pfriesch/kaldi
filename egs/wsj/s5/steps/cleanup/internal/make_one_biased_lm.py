@@ -246,6 +246,7 @@ class NgramCounts(object):
 
     def GetProb(self, hist, word, total_count_map):
         total_count = total_count_map[hist]
+        assert total_count > 0, "total count of {} is 0".format(hist)
         word_to_count = self.counts[len(hist)][hist]
         prob = old_div(word_to_count[word], total_count)
         if len(hist) > 0 and word != self.backoff_symbol:

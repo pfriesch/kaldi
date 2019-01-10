@@ -40,7 +40,7 @@ cd $workdir
 mfccdir=mfcc_kws
 if [ ! -d $mfccdir ]; then
 
-    for x in train dev test; do
+    for x in dev test; do
       steps/make_mfcc.sh --cmd "$train_cmd" --nj $feats_nj $data/$x exp/make_mfcc/$x $mfccdir
       steps/compute_cmvn_stats.sh $data/$x exp/make_mfcc/$x $mfccdir
     done
@@ -50,18 +50,15 @@ echo "MFCCs already extracted. Skipping.."
 fi
 
 echo ============================================================================
-echo "         MLLR Feature Extration & CMVN for Training and Test set          "
+echo "         FBANK Feature Extration & CMVN for Training and Test set          "
 echo ============================================================================
 
-librispeech_dir=../../librispeech/s5/
 
-for split_name in test dev train ; do
+feadir=fbank
 
-steps/align_fmllr.sh --nj 5 --cmd "$train_cmd" \
-                   $data/$split_name $librispeech_dir/data/lang $librispeech_dir/exp/tri5b exp/align_fmllr_$split_name
-
-
-steps/compute_cmvn_stats.sh  $data/$split_name exp/make_mfcc/$split_name $mfccdir
+for x in dev test; do
+  steps/make_fbank.sh --cmd "$train_cmd" --nj $feats_nj $data/$x exp/make_fbank/$x $feadir
+  steps/compute_cmvn_stats.sh $data/$x exp/make_fbank/$x $feadir
 done
 
 #chunk=train
