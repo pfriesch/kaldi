@@ -68,6 +68,7 @@ fi
 
 utils/filter_scp.pl $tmpdir/len.feats $tmpdir/len.targets | \
   paste -d ' ' - $tmpdir/len.feats | python -c "
+from __future__ import print_function
 import sys
 num_lines = 0
 for line in sys.stdin:

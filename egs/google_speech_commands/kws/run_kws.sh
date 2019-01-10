@@ -2,21 +2,84 @@
 # Copyright (c) 2018, Johns Hopkins University (Yenda Trmal <jtrmal@gmail.com>)
 # License: Apache 2.0
 
-data=./data/
+data=data_kws
 data_url=http://download.tensorflow.org/data
 dataset_name=speech_commands_v0.02
+
+workdir=`pwd`
 
 . ./cmd.sh
 . ./path.sh
 
-stage=0
+stage=0 #TODO
 . utils/parse_options.sh
+
+
+feats_nj=10
+train_nj=30
+decode_nj=5
 
 set -euo pipefail
 
 mkdir -p $data
 
+echo ============================================================================
+echo "                      Data Download & Preparation                         "
+echo ============================================================================
+
 local/download_and_untar.sh $data $data_url $dataset_name
+local/make_text.py $data/$dataset_name $data
+
+
+echo ============================================================================
+echo "         MFCC Feature Extration & CMVN for Training and Test set          "
+echo ============================================================================
+
+cd $workdir
+# Now make MFCC features.
+mfccdir=mfcc_kws
+if [ ! -d $mfccdir ]; then
+
+    for x in dev test; do
+      steps/make_mfcc.sh --cmd "$train_cmd" --nj $feats_nj $data/$x exp/make_mfcc/$x $mfccdir
+      steps/compute_cmvn_stats.sh $data/$x exp/make_mfcc/$x $mfccdir
+    done
+else
+echo "MFCCs already extracted. Skipping.."
+
+fi
+
+echo ============================================================================
+echo "         FBANK Feature Extration & CMVN for Training and Test set          "
+echo ============================================================================
+
+
+feadir=fbank
+
+for x in dev test; do
+  steps/make_fbank.sh --cmd "$train_cmd" --nj $feats_nj $data/$x exp/make_fbank/$x $feadir
+  steps/compute_cmvn_stats.sh $data/$x exp/make_fbank/$x $feadir
+done
+
+#chunk=train
+##chunk=dev_clean # Uncomment to process dev
+##chunk=test_clean # Uncomment to process test
+#gmmdir=../../librispeech/s5/exp/tri4b
+#
+#dir=fmllr/$chunk
+#steps/nnet/make_fmllr_feats.sh --nj 10 --cmd "$train_cmd" \
+#    --transform-dir $gmmdir/decode_tgsmall_$chunk \
+#        $dir $data/$chunk $gmmdir $dir/log $dir/$data || exit 1
+#
+#compute-cmvn-stats --spk2utt=ark:$data/$chunk/spk2utt scp:fmllr/$chunk/feats.scp ark:$dir/$data/cmvn_speaker.ark
+
+
+
+
+
+
+
+
 
 #
 ## Begin configuration section.

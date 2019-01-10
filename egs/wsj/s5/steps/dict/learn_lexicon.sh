@@ -160,7 +160,7 @@ if [ $stage -le 0 ]; then
   # ceiling(avg. # prons per word in the reference lexicon). This'll be used as 
   # the upper bound of # pron variants per word when we apply G2P or select prons to
   # construct the learned lexicon in later stages.
-  python -c 'import sys; import math; print int(math.ceil(float(sys.argv[1])/float(sys.argv[2])))' \
+  python -c 'from __future__ import print_function; import sys; import math; print(int(math.ceil(float(sys.argv[1])/float(sys.argv[2]))))' \
     `wc -l $dir/ref_lexicon.txt | awk '{print $1}'` `wc -l $dir/ref_vocab.txt | awk '{print $1}'` \
     > $dir/target_num_prons_per_word || exit 1;
 

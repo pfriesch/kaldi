@@ -674,7 +674,7 @@ if [ $stage -le $num_iters ]; then
     nnets_list[$n]="nnet3-am-copy --raw=true $mdl -|";
   done
 
-  combine_num_chunk_per_minibatch=$(python -c "print int(1024.0/($chunk_width))")
+  combine_num_chunk_per_minibatch=$(python -c "from __future__ import print_function; print(int(1024.0/($chunk_width)))")
   $cmd $combine_queue_opt $dir/log/combine.log \
     nnet3-combine --num-iters=40 \
        --enforce-sum-to-one=true --enforce-positive-weights=true \

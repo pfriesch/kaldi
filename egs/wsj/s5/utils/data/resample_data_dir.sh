@@ -33,12 +33,14 @@ if [ ! -s $dir/utt2dur ]; then
 fi
 
 mv $dir/wav.scp $dir/wav.scp.tmp
-cat $dir/wav.scp.tmp | python -c "import sys
+cat $dir/wav.scp.tmp | python -c "
+from __future__ import print_function
+import sys
 for line in sys.stdin.readlines():
   splits = line.strip().split()
   if splits[-1] == '|':
     out_line = line.strip() + ' $sox -t wav - -c 1 -b 16 -t wav - rate $freq |'
   else:
     out_line = '{0} cat {1} | $sox -t wav - -c 1 -b 16 -t wav - rate $freq |'.format(splits[0], ' '.join(splits[1:]))
-  print (out_line)" > ${dir}/wav.scp
+  print(out_line)" > ${dir}/wav.scp
 rm $dir/wav.scp.tmp

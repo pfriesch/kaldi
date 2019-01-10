@@ -94,10 +94,11 @@ echo "$0: checking the alignment files generated have at least 90% of the uttera
 for i in `seq 1 $num_jobs`; do
   num_lines=`cat $temp_dir/ali.$i.scp | wc -l` || exit 1;
   num_lines_tot=`cat $data/split$num_jobs/$i/utt2spk | wc -l` || exit 1;
-  python -c "import sys;
+  python -c "from __future__ import print_function;
+import sys;
 percent = 100.0 * float($num_lines) / $num_lines_tot
 if percent < 90 :
-  print ('$dest/ali.$i.gz {0}% utterances missing.'.format(percent))"  || exit 1;
+  print('$dest/ali.$i.gz {0}% utterances missing.'.format(percent))"  || exit 1;
 done
 rm -r $temp_dir 2>/dev/null
 
