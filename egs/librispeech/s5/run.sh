@@ -10,7 +10,7 @@ data=/mnt/data/datasets/
 data_url=www.openslr.org/resources/12
 lm_url=www.openslr.org/resources/11
 mfccdir=mfcc
-stage=1
+stage=19
 
 . ./cmd.sh
 . ./path.sh
