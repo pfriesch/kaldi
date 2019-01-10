@@ -40,6 +40,7 @@ cat $tmpdir/dm_utts | sed -e "s/$pattern//g" > $tmpdir/key
 paste -d' ' $tmpdir/key $tmpdir/dm_utts  > $tmpdir/key2dm
 
 python -c "
+from __future__ import print_function
 ihm = dict(map(lambda x: [x.split()[0], ' '.join(x.split()[1:])], open('$tmpdir/key2ihm').readlines()))
 dm = dict(map(lambda x: x.split(), open('$tmpdir/key2dm').readlines()))
 
@@ -48,7 +49,7 @@ keys.sort()
 
 for key in keys :
   try:
-    print '{0} {1}'.format(dm[key], ihm[key])
+    print('{0} {1}'.format(dm[key], ihm[key]))
   except KeyError:
     continue
 " > data/$new_mic/${dset}_parallel/segments

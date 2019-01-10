@@ -81,7 +81,7 @@ fi
 # combining the segments in training data to have a minimum length of frames_per_eg + tolerance
 # this is critical stage in AMI (gives 1% absolute improvement)
 if [ -z $min_seg_len ]; then
-  min_seg_len=$(python -c "print ($frames_per_eg+5)/100.0")
+  min_seg_len=$(python -c "from __future__ import print_function; print(($frames_per_eg+5)/100.0)")
 fi
 
 if [ $stage -le 12 ]; then

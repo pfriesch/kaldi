@@ -17,13 +17,14 @@ use_sat_alignments=true
 volume_perturb_datadir()  {
   dir=$1
   cat $dir/wav.scp | python -c "
+from __future__ import print_function
 import sys, os, subprocess, re, random
 scale_low = 1.0/8
 scale_high = 2.0
 for line in sys.stdin.readlines():
   if len(line.strip()) == 0:
     continue
-  print '{0} sox --vol {1} -t wav - -t wav - |'.format(line.strip(), random.uniform(scale_low, scale_high))
+  print('{0} sox --vol {1} -t wav - -t wav - |'.format(line.strip(), random.uniform(scale_low, scale_high)))
 "| sort -k1,1 -u  > $dir/wav.scp_scaled || exit 1;
   mv $dir/wav.scp $dir/wav.scp_nonorm
   mv $dir/wav.scp_scaled $dir/wav.scp
